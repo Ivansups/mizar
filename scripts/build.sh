@@ -1,22 +1,22 @@
 #!/bin/sh
-# Build dist/sigma-audit: a single executable zipapp plus SHA256SUMS.
+# Build dist/mizar: a single executable zipapp plus SHA256SUMS.
 set -eu
 cd "$(dirname "$0")/.."
 
 rm -rf build dist
 mkdir build dist
-cp -R src/sigma_audit build/
+cp -R src/mizar build/
 find build -name __pycache__ -prune -exec rm -rf {} +
 
-python3 -m zipapp build -m "sigma_audit.cli:entry" \
-    -p "/usr/bin/env python3" -o dist/sigma-audit
-chmod +x dist/sigma-audit
+python3 -m zipapp build -m "mizar.cli:entry" \
+    -p "/usr/bin/env python3" -o dist/mizar
+chmod +x dist/mizar
 
 cd dist
 if command -v sha256sum >/dev/null 2>&1; then
-    sha256sum sigma-audit > SHA256SUMS
+    sha256sum mizar > SHA256SUMS
 else
-    shasum -a 256 sigma-audit > SHA256SUMS
+    shasum -a 256 mizar > SHA256SUMS
 fi
 rm -rf ../build
-echo "built dist/sigma-audit"
+echo "built dist/mizar"

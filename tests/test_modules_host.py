@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from sigma_audit.context import CommandResult
-from sigma_audit.models import Finding, SkipReason, Status
-from sigma_audit.modules.filesystem import FilesystemModule
-from sigma_audit.modules.logs import LogsModule
-from sigma_audit.modules.packages import PackagesModule
+from mizar.context import CommandResult
+from mizar.models import Finding, SkipReason, Status
+from mizar.modules.filesystem import FilesystemModule
+from mizar.modules.logs import LogsModule
+from mizar.modules.packages import PackagesModule
 from tests.conftest import MakeCtx
 
 

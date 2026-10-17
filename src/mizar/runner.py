@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import List
 
-from sigma_audit.base import PROFILES, Module
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, SkipReason, Status
+from mizar.base import PROFILES, Module
+from mizar.context import Context
+from mizar.models import Finding, SkipReason, Status
 
 
 def select_modules(

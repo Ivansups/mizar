@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from sigma_audit.context import CommandResult
-from sigma_audit.models import Finding, SkipReason, Status
-from sigma_audit.modules.docker import DockerModule
-from sigma_audit.modules.lynis import REPORT_PATH, LynisModule
-from sigma_audit.modules.malware import MalwareModule
+from mizar.context import CommandResult
+from mizar.models import Finding, SkipReason, Status
+from mizar.modules.docker import DockerModule
+from mizar.modules.lynis import REPORT_PATH, LynisModule
+from mizar.modules.malware import MalwareModule
 from tests.conftest import MakeCtx
 
 LYNIS_CMD = ("lynis", "audit", "system", "--quick", "--no-colors")

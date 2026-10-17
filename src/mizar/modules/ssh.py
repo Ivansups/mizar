@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from typing import Dict, List, Optional, Tuple
 
-from sigma_audit.base import Module, lacks_privileges
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, SkipReason, Status
+from mizar.base import Module, lacks_privileges
+from mizar.context import Context
+from mizar.models import Finding, SkipReason, Status
 
 SSHD_PATHS = ("sshd", "/usr/sbin/sshd")
 MAX_AUTH_TRIES = 4

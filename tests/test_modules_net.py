@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Dict, List
 
-from sigma_audit.context import CommandResult
-from sigma_audit.models import Finding, SkipReason, Status
-from sigma_audit.modules.firewall import FirewallModule
-from sigma_audit.modules.network import NetworkModule, NmapModule
-from sigma_audit.modules.ssh import SshModule
+from mizar.context import CommandResult
+from mizar.models import Finding, SkipReason, Status
+from mizar.modules.firewall import FirewallModule
+from mizar.modules.network import NetworkModule, NmapModule
+from mizar.modules.ssh import SshModule
 from tests.conftest import MakeCtx, fixture_text
 
 

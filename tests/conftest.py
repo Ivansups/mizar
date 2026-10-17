@@ -5,7 +5,7 @@ from typing import Callable, Dict, Optional, Sequence, Set, Tuple
 
 import pytest
 
-from sigma_audit.context import CommandResult, Context
+from mizar.context import CommandResult, Context
 
 FIXTURES = Path(__file__).parent / "fixtures"
 

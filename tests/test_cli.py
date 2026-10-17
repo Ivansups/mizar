@@ -6,10 +6,10 @@ from typing import List
 
 import pytest
 
-from sigma_audit import cli
-from sigma_audit.base import Module
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, Status
+from mizar import cli
+from mizar.base import Module
+from mizar.context import Context
+from mizar.models import Finding, Status
 from tests.conftest import MakeCtx
 
 
@@ -113,7 +113,7 @@ def test_default_dir_refuses_symlinked_reports_root(
     elsewhere.mkdir()
     work = tmp_path / "work"
     work.mkdir()
-    (work / "sigma-reports").symlink_to(elsewhere)
+    (work / "mizar-reports").symlink_to(elsewhere)
     monkeypatch.chdir(work)
     assert cli.main(["run"]) == 3
     assert list(elsewhere.iterdir()) == []

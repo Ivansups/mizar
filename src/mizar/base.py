@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from sigma_audit.context import CommandResult, Context
-from sigma_audit.models import Finding, SkipReason, Status
+from mizar.context import CommandResult, Context
+from mizar.models import Finding, SkipReason, Status
 
 PROFILES = ("quick", "standard", "full")
 

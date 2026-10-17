@@ -4,10 +4,10 @@ from typing import List
 
 import pytest
 
-from sigma_audit.base import Module
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, SkipReason, Status
-from sigma_audit.runner import run_modules, select_modules
+from mizar.base import Module
+from mizar.context import Context
+from mizar.models import Finding, SkipReason, Status
+from mizar.runner import run_modules, select_modules
 from tests.conftest import MakeCtx
 
 

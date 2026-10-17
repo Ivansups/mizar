@@ -1,4 +1,4 @@
-# sigma-audit
+# mizar
 
 A read-only security audit for Linux servers. It looks at SSH, the firewall,
 listening ports, pending updates, login history, file permissions and, when
@@ -13,19 +13,19 @@ changes the system and never installs anything.
 Needs Python 3.8 or newer, which every current Debian, Ubuntu and RHEL ships.
 
 ```bash
-curl -LO https://github.com/Ivansups/sigma-audit/releases/latest/download/sigma-audit
-curl -LO https://github.com/Ivansups/sigma-audit/releases/latest/download/SHA256SUMS
-sha256sum -c SHA256SUMS && sudo install -m 755 sigma-audit /usr/local/bin/sigma-audit
+curl -LO https://github.com/Ivansups/mizar/releases/latest/download/mizar
+curl -LO https://github.com/Ivansups/mizar/releases/latest/download/SHA256SUMS
+sha256sum -c SHA256SUMS && sudo install -m 755 mizar /usr/local/bin/mizar
 ```
 
 ## Run
 
 ```bash
-sudo sigma-audit
+sudo mizar
 ```
 
 That runs the `standard` profile (passive checks only), prints a summary and
-saves `report.json` and `report.txt` to `./sigma-reports/<host>-<time>/`.
+saves `report.json` and `report.txt` to `./mizar-reports/<host>-<time>/`.
 Without root the checks that need it are reported as `SKIPPED (no_privileges)`.
 
 ## Statuses
@@ -43,13 +43,13 @@ for example `34 executed, 7 skipped, 0 errors`.
 ## Usage
 
 ```
-sigma-audit [run] [--profile quick|standard|full] [--modules a,b] [--skip x,y]
+mizar [run] [--profile quick|standard|full] [--modules a,b] [--skip x,y]
             [--format text|json] [--output DIR] [--no-save]
             [--min-severity ok|warn|crit] [--active] [--target HOST]
             [--timeout SEC] [--strict] [--no-color] [-q] [-v]
-sigma-audit list      # modules and the tools they use
-sigma-audit doctor    # which optional tools are installed
-sigma-audit report FILE.json
+mizar list      # modules and the tools they use
+mizar doctor    # which optional tools are installed
+mizar report FILE.json
 ```
 
 `--active` enables the nmap scan of `--target` (default `127.0.0.1`).

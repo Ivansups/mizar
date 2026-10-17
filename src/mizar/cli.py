@@ -12,11 +12,11 @@ import sys
 from pathlib import Path
 from typing import List, NoReturn, Optional
 
-from sigma_audit import __version__
-from sigma_audit.base import PROFILES
-from sigma_audit.context import Context
-from sigma_audit.modules import all_modules
-from sigma_audit.report import (
+from mizar import __version__
+from mizar.base import PROFILES
+from mizar.context import Context
+from mizar.modules import all_modules
+from mizar.report import (
     Report,
     build_report,
     exit_code,
@@ -24,7 +24,7 @@ from sigma_audit.report import (
     render_text,
     validate_report,
 )
-from sigma_audit.runner import run_modules, select_modules
+from mizar.runner import run_modules, select_modules
 
 USAGE_ERROR = 3
 PACKAGED_TOOLS = {"lynis", "nmap", "needrestart", "rkhunter", "chkrootkit"}
@@ -44,7 +44,7 @@ def _csv(value: str) -> List[str]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = _Parser(prog="sigma-audit", description="Read-only Linux audit.")
+    parser = _Parser(prog="mizar", description="Read-only Linux audit.")
     parser.add_argument("--version", action="version", version=__version__)
     sub = parser.add_subparsers(dest="command", parser_class=_Parser)
 
@@ -91,9 +91,9 @@ def _save(report: Report, text: str, directory: Optional[str]) -> Path:
         target = Path(directory)
         target.mkdir(mode=0o700, parents=True, exist_ok=True)
     else:
-        root = Path("sigma-reports")
+        root = Path("mizar-reports")
         if root.is_symlink():
-            raise OSError("sigma-reports is a symlink, refusing to write into it")
+            raise OSError("mizar-reports is a symlink, refusing to write into it")
         root.mkdir(mode=0o700, exist_ok=True)
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         host = re.sub(r"[^A-Za-z0-9._-]", "_", report["host"])
@@ -108,7 +108,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     try:
         modules = select_modules(all_modules(), args.profile, args.modules, args.skip)
     except ValueError as exc:
-        print(f"sigma-audit: {exc}", file=sys.stderr)
+        print(f"mizar: {exc}", file=sys.stderr)
         return USAGE_ERROR
     ctx = build_context(args)
     findings = run_modules(modules, ctx)
@@ -126,7 +126,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         try:
             where = _save(report, plain, args.output)
         except OSError as exc:
-            print(f"sigma-audit: cannot save report: {exc}", file=sys.stderr)
+            print(f"mizar: cannot save report: {exc}", file=sys.stderr)
             return USAGE_ERROR
         print(f"Report saved to {where}", file=sys.stderr)
     return exit_code(report, args.strict)
@@ -171,7 +171,7 @@ def _cmd_report(args: argparse.Namespace) -> int:
     try:
         report = validate_report(json.loads(Path(args.file).read_text()))
     except (OSError, ValueError) as exc:
-        print(f"sigma-audit: cannot read {args.file}: {exc}", file=sys.stderr)
+        print(f"mizar: cannot read {args.file}: {exc}", file=sys.stderr)
         return USAGE_ERROR
     print(render_text(report, "ok", color=False, verbose=False))
     return exit_code(report, strict=False)

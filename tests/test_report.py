@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import List
 
-from sigma_audit.models import Finding, SkipReason, Status
-from sigma_audit.report import build_report, exit_code, render_text
+from mizar.models import Finding, SkipReason, Status
+from mizar.report import build_report, exit_code, render_text
 
 
 def f(status: Status, reason: SkipReason | None = None) -> Finding:
@@ -63,7 +63,7 @@ def test_color_adds_ansi_and_verbose_shows_ok_evidence() -> None:
 
 
 def test_validate_report_accepts_valid_and_recomputes_coverage() -> None:
-    from sigma_audit.report import validate_report
+    from mizar.report import validate_report
 
     report = report_for([f(Status.CRIT), f(Status.OK)])
     report["coverage"] = {"executed": 0, "skipped": 99, "errors": 0}
@@ -76,7 +76,7 @@ def test_validate_report_rejects_tampered_documents() -> None:
 
     import pytest
 
-    from sigma_audit.report import validate_report
+    from mizar.report import validate_report
 
     good = report_for([f(Status.OK)])
     bad_status = copy.deepcopy(good)
@@ -92,7 +92,7 @@ def test_validate_report_rejects_tampered_documents() -> None:
 def test_validate_report_rejects_escape_codes_in_header_fields() -> None:
     import pytest
 
-    from sigma_audit.report import validate_report
+    from mizar.report import validate_report
 
     for key in ("tool_version", "host", "distro", "profile"):
         for bad in ("\x1b[31mred", "a\nb", 5):

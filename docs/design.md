@@ -1,4 +1,4 @@
-# sigma-audit design
+# mizar design
 
 A read-only security analyzer for Linux servers. It never changes the system
 and never installs anything.
@@ -22,13 +22,13 @@ executed / skipped / errored.
 
 ## CLI
 ```
-sigma-audit [run] [--profile quick|standard|full] [--modules a,b] [--skip x,y]
+mizar [run] [--profile quick|standard|full] [--modules a,b] [--skip x,y]
             [--format text|json] [--output DIR] [--no-save] [--min-severity ok|warn|crit]
             [--active] [--target HOST] [--timeout SEC] [--strict]
             [--no-color] [-q] [-v]
-sigma-audit doctor
-sigma-audit list
-sigma-audit report FILE.json
+mizar doctor
+mizar list
+mizar report FILE.json
 ```
 No arguments means `run --profile standard` (passive only).
 
@@ -47,7 +47,7 @@ Precedence: 2, then 3, then 4, then 1.
 `schema_version`, `tool_version`, `host`, `distro`, `timestamp`, `profile`,
 `coverage` (`executed`, `skipped`, `errors`), `findings[]`.
 `--format` only picks what goes to stdout; `report.json` and `report.txt` are
-saved unless `--no-save`. Default output dir: `./sigma-reports/<host>-<timestamp>/` with `report.json`
+saved unless `--no-save`. Default output dir: `./mizar-reports/<host>-<timestamp>/` with `report.json`
 and `report.txt`.
 
 ## Modules

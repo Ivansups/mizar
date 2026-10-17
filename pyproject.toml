@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sigma-audit"
+name = "mizar"
 version = "0.1.0"
 description = "Read-only security audit for Linux servers"
 readme = "README.md"
@@ -15,7 +15,7 @@ dependencies = []
 dev = ["pytest", "mypy", "ruff"]
 
 [project.scripts]
-sigma-audit = "sigma_audit.cli:entry"
+mizar = "mizar.cli:entry"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -6,9 +6,9 @@ import re
 from collections import Counter
 from typing import List, Optional
 
-from sigma_audit.base import Module
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, SkipReason, Status
+from mizar.base import Module
+from mizar.context import Context
+from mizar.models import Finding, SkipReason, Status
 
 LOG_FILES = ("/var/log/auth.log", "/var/log/secure")
 JOURNAL_CMD = [

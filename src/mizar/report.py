@@ -6,8 +6,8 @@ import datetime
 import re
 from typing import Any, Dict, List
 
-from sigma_audit import __version__
-from sigma_audit.models import Coverage, Finding, Status
+from mizar import __version__
+from mizar.models import Coverage, Finding, Status
 
 SCHEMA_VERSION = 1
 Report = Dict[str, Any]
@@ -160,7 +160,7 @@ def render_summary(report: Report) -> str:
 def render_text(report: Report, min_severity: str, color: bool, verbose: bool) -> str:
     header = "  ".join(
         [
-            f"sigma-audit {_safe(report['tool_version'])}",
+            f"mizar {_safe(report['tool_version'])}",
             f"host={_safe(report['host'])}",
             f"distro={_safe(report['distro'])}",
             f"profile={_safe(report['profile'])}",

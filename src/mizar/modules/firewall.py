@@ -5,9 +5,9 @@ from __future__ import annotations
 import re
 from typing import List, Optional
 
-from sigma_audit.base import Module, lacks_privileges
-from sigma_audit.context import Context
-from sigma_audit.models import Finding, SkipReason, Status
+from mizar.base import Module, lacks_privileges
+from mizar.context import Context
+from mizar.models import Finding, SkipReason, Status
 
 DENY = "deny"
 OPEN = "open"

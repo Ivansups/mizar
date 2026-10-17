@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sigma_audit.models import Coverage, Finding, SkipReason, Status
+from mizar.models import Coverage, Finding, SkipReason, Status
 
 
 def test_finding_to_dict_uses_plain_values() -> None:
