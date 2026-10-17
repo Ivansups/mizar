@@ -36,7 +36,9 @@ class PackagesModule(Module):
                 if "[upgradable" in line
             ]
             security = sum("-security" in line for line in lines)
-            return self._pending(title, [l.split("/")[0] for l in lines], security)
+            return self._pending(
+                title, [line.split("/")[0] for line in lines], security
+            )
         if ctx.has("dnf"):
             result = ctx.run(["dnf", "check-update", "-q"])
             if result.returncode == 0:
@@ -59,7 +61,9 @@ class PackagesModule(Module):
             "neither apt nor dnf found",
         )
 
-    def _pending(self, title: str, names: List[str], security: Optional[int]) -> Finding:
+    def _pending(
+        self, title: str, names: List[str], security: Optional[int]
+    ) -> Finding:
         if not names:
             return self.finding("packages.updates", Status.OK, title)
         extra = f" ({security} security)" if security is not None else ""
@@ -88,13 +92,13 @@ class PackagesModule(Module):
             )
         if ctx.has("dnf"):
             result = ctx.run(["systemctl", "is-enabled", "dnf-automatic.timer"])
-            enabled = result.stdout.strip() == "enabled"
+            timer_on = result.stdout.strip() == "enabled"
             return self.finding(
                 "packages.auto_updates",
-                Status.OK if enabled else Status.WARN,
+                Status.OK if timer_on else Status.WARN,
                 title,
-                "" if enabled else "dnf-automatic.timer is not enabled",
-                "" if enabled else advice,
+                "" if timer_on else "dnf-automatic.timer is not enabled",
+                "" if timer_on else advice,
             )
         return self.skip(
             "packages.auto_updates", title, SkipReason.NOT_APPLICABLE, "no apt or dnf"

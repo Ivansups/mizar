@@ -1,0 +1,28 @@
+# Test image: Ubuntu 20.04 ships Python 3.8 (the supported floor) and every
+# tool mizar can talk to, so the full suite can run against a real system.
+FROM ubuntu:20.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip ca-certificates git curl sudo \
+        openssh-server ufw nftables iptables iproute2 procps \
+        lynis nmap rkhunter chkrootkit needrestart unattended-upgrades \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --no-cache-dir pytest ssh-audit
+
+RUN git clone --depth 1 https://github.com/docker/docker-bench-security \
+        /opt/docker-bench-security \
+    && ln -s /opt/docker-bench-security/docker-bench-security.sh \
+        /usr/local/bin/docker-bench-security.sh
+
+RUN ssh-keygen -A && mkdir -p /run/sshd && (rkhunter --propupd || true)
+RUN useradd -m tester
+
+WORKDIR /app
+COPY pyproject.toml ./
+COPY src ./src
+COPY tests ./tests
+COPY docker ./docker
+ENV PYTHONPATH=/app/src MIZAR_INTEGRATION=1
+ENTRYPOINT ["/app/docker/entrypoint-test.sh"]

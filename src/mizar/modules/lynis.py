@@ -34,11 +34,15 @@ class LynisModule(Module):
         title = "Lynis system audit"
         if not ctx.has("lynis"):
             return [
-                self.skip("lynis.audit", title, SkipReason.TOOL_MISSING, "lynis not found")
+                self.skip(
+                    "lynis.audit", title, SkipReason.TOOL_MISSING, "lynis not found"
+                )
             ]
         if not ctx.is_root:
             return [
-                self.skip("lynis.audit", title, SkipReason.NO_PRIVILEGES, "lynis needs root")
+                self.skip(
+                    "lynis.audit", title, SkipReason.NO_PRIVILEGES, "lynis needs root"
+                )
             ]
         result = ctx.run(
             ["lynis", "audit", "system", "--quick", "--no-colors"],

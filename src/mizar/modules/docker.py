@@ -23,18 +23,25 @@ class DockerModule(Module):
         id, title = "docker.bench", "CIS Docker benchmark"
         if not ctx.has("docker"):
             return [
-                self.skip(id, title, SkipReason.NOT_APPLICABLE, "Docker is not installed")
+                self.skip(
+                    id, title, SkipReason.NOT_APPLICABLE, "Docker is not installed"
+                )
             ]
         script = next((s for s in BENCH_SCRIPTS if ctx.has(s)), None)
         if script is None:
             return [
                 self.skip(
-                    id, title, SkipReason.TOOL_MISSING, "docker-bench-security not found"
+                    id,
+                    title,
+                    SkipReason.TOOL_MISSING,
+                    "docker-bench-security not found",
                 )
             ]
         if not ctx.is_root:
             return [
-                self.skip(id, title, SkipReason.NO_PRIVILEGES, "the benchmark needs root")
+                self.skip(
+                    id, title, SkipReason.NO_PRIVILEGES, "the benchmark needs root"
+                )
             ]
         # -l /dev/null: the script writes a log file into the current directory.
         result = ctx.run([script, "-l", "/dev/null"], timeout=BENCH_TIMEOUT)
@@ -53,7 +60,9 @@ class DockerModule(Module):
                 id,
                 Status.WARN,
                 title,
-                f"{len(warnings)} failed checks\n" + "\n".join(warnings[:SAMPLE]) + more,
+                f"{len(warnings)} failed checks\n"
+                + "\n".join(warnings[:SAMPLE])
+                + more,
                 "Review the CIS Docker benchmark items listed above.",
             )
         ]

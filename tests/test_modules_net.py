@@ -146,3 +146,34 @@ def test_nmap_is_active_and_parses_open_ports(make_ctx: MakeCtx) -> None:
 def test_nmap_missing_is_skipped(make_ctx: MakeCtx) -> None:
     finding = NmapModule().run(make_ctx(active=True))[0]
     assert finding.skip_reason is SkipReason.TOOL_MISSING
+
+
+def test_firewall_partial_denial_without_root_is_skipped_not_warned(
+    make_ctx: MakeCtx,
+) -> None:
+    ctx = make_ctx(
+        {
+            ("ufw", "status", "verbose"): CommandResult(
+                stderr="ERROR: You need to be root", returncode=1
+            ),
+            ("nft", "list", "ruleset"): CommandResult(),
+            ("iptables", "-S"): CommandResult(stderr="Permission denied", returncode=4),
+        },
+        is_root=False,
+    )
+    finding = FirewallModule().run(ctx)[0]
+    assert finding.status is Status.SKIPPED
+    assert finding.skip_reason is SkipReason.NO_PRIVILEGES
+
+
+def test_ssh_audit_evidence_is_a_short_summary(make_ctx: MakeCtx) -> None:
+    sshd = {("sshd", "-T"): CommandResult(fixture_text("sshd_T_good.txt"))}
+    recs = (
+        '{"recommendations": {"critical": {"del": {"kex": ['
+        '{"name": "diffie-hellman-group1-sha1", "notes": ""}, '
+        '{"name": "ecdh-sha2-nistp256", "notes": ""}]}}, "warning": {}}}'
+    )
+    audit_cmd = ("ssh-audit", "-j", "-p", "22", "127.0.0.1")
+    ctx = make_ctx({**sshd, audit_cmd: CommandResult(recs)})
+    evidence = by_id(SshModule().run(ctx))["ssh.audit"].evidence
+    assert evidence == "del kex: diffie-hellman-group1-sha1, ecdh-sha2-nistp256"

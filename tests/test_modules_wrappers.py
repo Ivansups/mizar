@@ -24,7 +24,9 @@ def by_id(findings: List[Finding]) -> Dict[str, Finding]:
 
 
 def test_lynis_reads_report_after_audit(make_ctx: MakeCtx) -> None:
-    ctx = make_ctx({LYNIS_CMD: CommandResult()}, files={REPORT_PATH: REPORT}, is_root=True)
+    ctx = make_ctx(
+        {LYNIS_CMD: CommandResult()}, files={REPORT_PATH: REPORT}, is_root=True
+    )
     found = by_id(LynisModule().run(ctx))
     assert found["lynis.hardening_index"].status is Status.WARN
     assert "48/100, 2 suggestions" in found["lynis.hardening_index"].evidence

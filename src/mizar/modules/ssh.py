@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from mizar.base import Module, lacks_privileges
 from mizar.context import Context
@@ -11,6 +11,20 @@ from mizar.models import Finding, SkipReason, Status
 
 SSHD_PATHS = ("sshd", "/usr/sbin/sshd")
 MAX_AUTH_TRIES = 4
+MAX_NAMES = 8
+
+
+def summarize_recommendations(section: Dict[str, Any]) -> str:
+    """Turn ssh-audit's nested advice into lines like `del kex: a, b`."""
+    lines = []
+    for action, groups in section.items():
+        for group, items in groups.items():
+            names = [i["name"] if isinstance(i, dict) else str(i) for i in items]
+            more = (
+                f" (+{len(names) - MAX_NAMES} more)" if len(names) > MAX_NAMES else ""
+            )
+            lines.append(f"{action} {group}: {', '.join(names[:MAX_NAMES])}{more}")
+    return "\n".join(lines)
 
 
 def parse_sshd_config(output: str) -> Dict[str, str]:
@@ -116,10 +130,18 @@ class SshModule(Module):
         advice = "Remove or replace the algorithms listed by ssh-audit."
         if recs.get("critical"):
             return self.finding(
-                "ssh.audit", Status.CRIT, title, json.dumps(recs["critical"]), advice
+                "ssh.audit",
+                Status.CRIT,
+                title,
+                summarize_recommendations(recs["critical"]),
+                advice,
             )
         if recs.get("warning"):
             return self.finding(
-                "ssh.audit", Status.WARN, title, json.dumps(recs["warning"]), advice
+                "ssh.audit",
+                Status.WARN,
+                title,
+                summarize_recommendations(recs["warning"]),
+                advice,
             )
         return self.finding("ssh.audit", Status.OK, title)

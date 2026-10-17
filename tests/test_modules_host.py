@@ -64,7 +64,9 @@ def test_unattended_upgrades_enabled_or_not(make_ctx: MakeCtx) -> None:
 
 
 def test_needrestart_runs_in_list_only_mode(make_ctx: MakeCtx) -> None:
-    pending = "NEEDRESTART-VER: 3.5\nNEEDRESTART-KSTA: 3\nNEEDRESTART-SVC: ssh.service\n"
+    pending = (
+        "NEEDRESTART-VER: 3.5\nNEEDRESTART-KSTA: 3\nNEEDRESTART-SVC: ssh.service\n"
+    )
     ctx = make_ctx(
         {
             APT_CMD: CommandResult("Listing...\n"),
@@ -85,7 +87,9 @@ def test_needrestart_missing_is_skipped(make_ctx: MakeCtx) -> None:
 
 
 def failed(n: int, ip: str) -> str:
-    line = "Oct 1 sshd[1]: Failed password for invalid user admin from {} port 22 ssh2\n"
+    line = (
+        "Oct 1 sshd[1]: Failed password for invalid user admin from {} port 22 ssh2\n"
+    )
     return line.format(ip) * n
 
 
@@ -111,7 +115,9 @@ def test_accepted_root_login_warns(make_ctx: MakeCtx) -> None:
 
 def test_journalctl_is_the_fallback(make_ctx: MakeCtx) -> None:
     cmd = ("journalctl", "-u", "ssh", "-u", "sshd", "--no-pager", "-o", "cat")
-    ctx = make_ctx({cmd + ("--since", "7 days ago"): CommandResult(failed(2, "1.2.3.4"))})
+    ctx = make_ctx(
+        {cmd + ("--since", "7 days ago"): CommandResult(failed(2, "1.2.3.4"))}
+    )
     assert by_id(LogsModule().run(ctx))["logs.failed_logins"].status is Status.OK
 
 
@@ -124,7 +130,11 @@ def test_no_log_source_without_root_is_no_privileges(make_ctx: MakeCtx) -> None:
 
 
 def test_extra_uid0_account_is_critical(make_ctx: MakeCtx) -> None:
-    passwd = "root:x:0:0::/root:/bin/bash\ntoor:x:0:0::/:/bin/sh\nbob:x:1000:1000::/h:/bin/sh\n"
+    passwd = (
+        "root:x:0:0::/root:/bin/bash\n"
+        "toor:x:0:0::/:/bin/sh\n"
+        "bob:x:1000:1000::/h:/bin/sh\n"
+    )
     found = by_id(FilesystemModule().run(make_ctx(files={"/etc/passwd": passwd})))
     assert found["filesystem.uid0"].status is Status.CRIT
     assert "toor" in found["filesystem.uid0"].evidence
@@ -141,8 +151,7 @@ def test_empty_password_is_critical_and_needs_root(make_ctx: MakeCtx) -> None:
 
 
 SUID_CMD = (
-    "find /tmp /var/tmp /dev/shm /home -xdev -type f "
-    "( -perm -4000 -o -perm -2000 )"
+    "find /tmp /var/tmp /dev/shm /home -xdev -type f ( -perm -4000 -o -perm -2000 )"
 ).split()
 WW_CMD = "find /etc /usr /bin /sbin /lib -xdev -type f -perm -0002".split()
 

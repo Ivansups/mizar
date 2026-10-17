@@ -58,7 +58,8 @@ class FirewallModule(Module):
                     "Set the default inbound policy to deny and allow needed ports.",
                 )
             ]
-        if set(values) == {DENIED}:
+        # One unreadable tool means "no firewall" cannot be concluded.
+        if DENIED in values:
             return [
                 self.skip(
                     "firewall.policy",

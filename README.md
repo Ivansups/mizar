@@ -101,6 +101,14 @@ python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 scripts/build.sh
 ```
 
+Full suite against a real system (Ubuntu 20.04, Python 3.8, with lynis, nmap,
+ssh-audit, rkhunter, chkrootkit and the rest installed):
+
+```bash
+docker build -f docker/Dockerfile.test -t mizar-test .
+docker run --rm mizar-test
+```
+
 Runtime code uses only the standard library and must stay compatible with
 Python 3.8.
 

@@ -16,5 +16,6 @@
 - Modules never call `subprocess` or `open()` directly: go through `Context`
   (`src/mizar/context.py`) so tests can fake the system.
 - Write the failing test first (`tests/`), then the code.
-- Checks: `ruff check . && ruff format --check . && mypy`, then `pytest`.
+- Checks: `ruff check . && ruff format --check . && mypy`, then the full suite
+  in Docker: `docker build -f docker/Dockerfile.test -t mizar-test . && docker run --rm mizar-test`.
 - Do not install packages or change the audited system from the tool.

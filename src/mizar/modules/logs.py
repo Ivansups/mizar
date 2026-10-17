@@ -38,8 +38,10 @@ class LogsModule(Module):
     def run(self, ctx: Context) -> List[Finding]:
         text = self._load(ctx)
         if text is None:
-            reason = SkipReason.NO_PRIVILEGES if not ctx.is_root else (
-                SkipReason.NOT_APPLICABLE
+            reason = (
+                SkipReason.NO_PRIVILEGES
+                if not ctx.is_root
+                else (SkipReason.NOT_APPLICABLE)
             )
             return [
                 self.skip(
