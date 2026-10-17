@@ -1,0 +1,81 @@
+from __future__ import annotations
+
+from typing import Dict, List
+
+from sigma_audit.context import CommandResult
+from sigma_audit.models import Finding, SkipReason, Status
+from sigma_audit.modules.docker import DockerModule
+from sigma_audit.modules.lynis import REPORT_PATH, LynisModule
+from sigma_audit.modules.malware import MalwareModule
+from tests.conftest import MakeCtx
+
+LYNIS_CMD = ("lynis", "audit", "system", "--quick", "--no-colors")
+REPORT = (
+    "# lynis report\n"
+    "hardening_index=48\n"
+    "warning[]=SSH-7440|Weak SSH config|-|-|\n"
+    "suggestion[]=AUTH-9286|Set password aging|-|-|\n"
+    "suggestion[]=KRNL-6000|Harden sysctl|-|-|\n"
+)
+
+
+def by_id(findings: List[Finding]) -> Dict[str, Finding]:
+    return {f.id: f for f in findings}
+
+
+def test_lynis_reads_report_after_audit(make_ctx: MakeCtx) -> None:
+    ctx = make_ctx({LYNIS_CMD: CommandResult()}, files={REPORT_PATH: REPORT}, is_root=True)
+    found = by_id(LynisModule().run(ctx))
+    assert found["lynis.hardening_index"].status is Status.WARN
+    assert "48/100, 2 suggestions" in found["lynis.hardening_index"].evidence
+    assert "SSH-7440: Weak SSH config" in found["lynis.warnings"].evidence
+
+
+def test_lynis_skip_reasons(make_ctx: MakeCtx) -> None:
+    missing = LynisModule().run(make_ctx())[0]
+    assert missing.skip_reason is SkipReason.TOOL_MISSING
+    nonroot = LynisModule().run(make_ctx({LYNIS_CMD: CommandResult()}))[0]
+    assert nonroot.skip_reason is SkipReason.NO_PRIVILEGES
+
+
+def test_rkhunter_warnings_and_chkrootkit_infection(make_ctx: MakeCtx) -> None:
+    ctx = make_ctx(
+        {
+            ("rkhunter", "--check", "--sk", "--nocolors", "--rwo"): CommandResult(
+                "Warning: Hidden file found: /dev/.udev\n", returncode=1
+            ),
+            ("chkrootkit", "-q"): CommandResult(
+                "Checking `bindshell'... INFECTED (PORTS: 31337)\n"
+            ),
+        },
+        is_root=True,
+    )
+    found = by_id(MalwareModule().run(ctx))
+    assert found["malware.rkhunter"].status is Status.WARN
+    assert found["malware.chkrootkit"].status is Status.CRIT
+
+
+def test_malware_tools_missing_or_without_root(make_ctx: MakeCtx) -> None:
+    for finding in MalwareModule().run(make_ctx()):
+        assert finding.skip_reason is SkipReason.TOOL_MISSING
+    ctx = make_ctx({("rkhunter", "--check"): CommandResult()}, is_root=False)
+    rk = by_id(MalwareModule().run(ctx))["malware.rkhunter"]
+    assert rk.skip_reason is SkipReason.NO_PRIVILEGES
+
+
+def test_docker_bench_not_applicable_without_docker(make_ctx: MakeCtx) -> None:
+    assert DockerModule().run(make_ctx())[0].skip_reason is SkipReason.NOT_APPLICABLE
+
+
+def test_docker_bench_collects_warnings(make_ctx: MakeCtx) -> None:
+    out = "[PASS] 1.1 - ok\n[WARN] 2.1 - Ensure network traffic is restricted\n"
+    ctx = make_ctx(
+        {
+            ("docker", "ps"): CommandResult(),
+            ("docker-bench-security.sh", "-l", "/dev/null"): CommandResult(out),
+        },
+        is_root=True,
+    )
+    finding = DockerModule().run(ctx)[0]
+    assert finding.status is Status.WARN
+    assert "1 failed checks" in finding.evidence

@@ -55,11 +55,12 @@ and `report.txt`.
 |---|---|---|
 | ssh | quick | `sshd -T`; ssh-audit if installed |
 | firewall | quick | ufw / nft / iptables, default deny inbound |
-| network | standard | `ss -tulpn`; nmap with `--active` |
+| network | standard | `ss -tulpn`: public and risky listeners |
+| nmap | standard | active only (`--active`), scans `--target` |
 | packages | standard | pending updates, unattended-upgrades, needrestart |
 | logs | standard | failed logins by IP, root logins |
 | filesystem | standard | UID 0, empty passwords, SUID/world-writable in risky dirs |
-| lynis | standard | parses the lynis report file |
+| lynis | standard | runs `lynis audit system`, parses `/var/log/lynis-report.dat` |
 | malware | full | rkhunter, chkrootkit |
 | docker | full | docker-bench-security, only when Docker exists |
 
