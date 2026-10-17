@@ -87,3 +87,22 @@ def test_validate_report_rejects_tampered_documents() -> None:
     for doc in docs:
         with pytest.raises(ValueError):
             validate_report(doc)
+
+
+def test_validate_report_rejects_escape_codes_in_header_fields() -> None:
+    import pytest
+
+    from sigma_audit.report import validate_report
+
+    for key in ("tool_version", "host", "distro", "profile"):
+        for bad in ("\x1b[31mred", "a\nb", 5):
+            doc = report_for([f(Status.OK)])
+            doc[key] = bad
+            with pytest.raises(ValueError):
+                validate_report(doc)
+
+
+def test_render_text_neutralizes_escape_codes_in_header() -> None:
+    report = report_for([f(Status.OK)])
+    report["profile"] = "\x1b]0;pwned\x07"
+    assert "\x1b" not in render_text(report, "ok", color=False, verbose=False)

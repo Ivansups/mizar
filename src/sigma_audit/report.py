@@ -54,6 +54,7 @@ _REQUIRED_KEYS = (
     "coverage",
     "findings",
 )
+_HEADER_KEYS = ("tool_version", "host", "distro", "profile")
 _FINDING_FIELDS = ("id", "module", "title", "evidence", "recommendation")
 _CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
 
@@ -69,6 +70,10 @@ def validate_report(data: object) -> Report:
     missing = [key for key in _REQUIRED_KEYS if key not in data]
     if missing:
         raise ValueError("report is missing: " + ", ".join(missing))
+    for key in _HEADER_KEYS:
+        value = data[key]
+        if not isinstance(value, str) or _CONTROL_CHARS.search(value) or "\n" in value:
+            raise ValueError(f"{key} must be a plain single-line string")
     if data["schema_version"] != SCHEMA_VERSION:
         raise ValueError(f"unsupported schema_version {data['schema_version']!r}")
     if not isinstance(data["findings"], list):
@@ -153,11 +158,15 @@ def render_summary(report: Report) -> str:
 
 
 def render_text(report: Report, min_severity: str, color: bool, verbose: bool) -> str:
-    lines = [
-        f"sigma-audit {report['tool_version']}  host={report['host']}  "
-        f"distro={_safe(report['distro'])}  profile={report['profile']}",
-        "",
-    ]
+    header = "  ".join(
+        [
+            f"sigma-audit {_safe(report['tool_version'])}",
+            f"host={_safe(report['host'])}",
+            f"distro={_safe(report['distro'])}",
+            f"profile={_safe(report['profile'])}",
+        ]
+    )
+    lines = [header, ""]
     for finding in report["findings"]:
         if not _visible(finding, min_severity):
             continue
