@@ -1,0 +1,7 @@
+port 2222
+addressfamily any
+permitrootlogin yes
+passwordauthentication yes
+permitemptypasswords no
+maxauthtries 6
+pubkeyauthentication yes

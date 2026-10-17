@@ -60,3 +60,30 @@ def test_color_adds_ansi_and_verbose_shows_ok_evidence() -> None:
     assert "some evidence" not in plain
     assert "some evidence" in verbose
     assert "\x1b[" in colored
+
+
+def test_validate_report_accepts_valid_and_recomputes_coverage() -> None:
+    from sigma_audit.report import validate_report
+
+    report = report_for([f(Status.CRIT), f(Status.OK)])
+    report["coverage"] = {"executed": 0, "skipped": 99, "errors": 0}
+    clean = validate_report(report)
+    assert clean["coverage"] == {"executed": 2, "skipped": 0, "errors": 0}
+
+
+def test_validate_report_rejects_tampered_documents() -> None:
+    import copy
+
+    import pytest
+
+    from sigma_audit.report import validate_report
+
+    good = report_for([f(Status.OK)])
+    bad_status = copy.deepcopy(good)
+    bad_status["findings"][0]["status"] = "FINE"
+    bad_version = {**good, "schema_version": 2}
+    missing = {k: v for k, v in good.items() if k != "host"}
+    docs: List[object] = [bad_status, bad_version, missing, [], {"findings": "x"}]
+    for doc in docs:
+        with pytest.raises(ValueError):
+            validate_report(doc)

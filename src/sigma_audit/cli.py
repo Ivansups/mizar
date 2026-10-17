@@ -6,6 +6,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 import socket
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ from sigma_audit.report import (
     exit_code,
     render_summary,
     render_text,
+    validate_report,
 )
 from sigma_audit.runner import run_modules, select_modules
 
@@ -77,15 +79,28 @@ def _use_color(args: argparse.Namespace) -> bool:
     return not args.no_color and sys.stdout.isatty() and "NO_COLOR" not in os.environ
 
 
+def _write_private(path: Path, text: str) -> None:
+    """Create a new owner-only file; never overwrite or follow a symlink."""
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    with os.fdopen(os.open(path, flags, 0o600), "w") as handle:
+        handle.write(text)
+
+
 def _save(report: Report, text: str, directory: Optional[str]) -> Path:
     if directory:
         target = Path(directory)
+        target.mkdir(mode=0o700, parents=True, exist_ok=True)
     else:
+        root = Path("sigma-reports")
+        if root.is_symlink():
+            raise OSError("sigma-reports is a symlink, refusing to write into it")
+        root.mkdir(mode=0o700, exist_ok=True)
         stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        target = Path("sigma-reports") / f"{report['host']}-{stamp}"
-    target.mkdir(parents=True, exist_ok=True)
-    (target / "report.json").write_text(json.dumps(report, indent=2) + "\n")
-    (target / "report.txt").write_text(text + "\n")
+        host = re.sub(r"[^A-Za-z0-9._-]", "_", report["host"])
+        target = root / f"{host}-{stamp}"
+        target.mkdir(mode=0o700)
+    _write_private(target / "report.json", json.dumps(report, indent=2) + "\n")
+    _write_private(target / "report.txt", text + "\n")
     return target
 
 
@@ -108,7 +123,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
         shown = render_text(report, args.min_severity, _use_color(args), args.verbose)
         print(shown)
     if not args.no_save:
-        where = _save(report, plain, args.output)
+        try:
+            where = _save(report, plain, args.output)
+        except OSError as exc:
+            print(f"sigma-audit: cannot save report: {exc}", file=sys.stderr)
+            return USAGE_ERROR
         print(f"Report saved to {where}", file=sys.stderr)
     return exit_code(report, args.strict)
 
@@ -150,7 +169,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 
 def _cmd_report(args: argparse.Namespace) -> int:
     try:
-        report = json.loads(Path(args.file).read_text())
+        report = validate_report(json.loads(Path(args.file).read_text()))
     except (OSError, ValueError) as exc:
         print(f"sigma-audit: cannot read {args.file}: {exc}", file=sys.stderr)
         return USAGE_ERROR

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 from typing import Any, Dict, List
 
 from sigma_audit import __version__
@@ -44,6 +45,67 @@ def build_report(
     }
 
 
+_REQUIRED_KEYS = (
+    "schema_version",
+    "tool_version",
+    "host",
+    "distro",
+    "profile",
+    "coverage",
+    "findings",
+)
+_FINDING_FIELDS = ("id", "module", "title", "evidence", "recommendation")
+_CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
+
+
+def validate_report(data: object) -> Report:
+    """Check an untrusted report.json; raise ValueError if it is not ours.
+
+    Statuses are normalized through `Status` and coverage is recomputed, so a
+    tampered file can neither hide a CRIT nor fake its own coverage.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("report must be a JSON object")
+    missing = [key for key in _REQUIRED_KEYS if key not in data]
+    if missing:
+        raise ValueError("report is missing: " + ", ".join(missing))
+    if data["schema_version"] != SCHEMA_VERSION:
+        raise ValueError(f"unsupported schema_version {data['schema_version']!r}")
+    if not isinstance(data["findings"], list):
+        raise ValueError("findings must be a list")
+    findings = []
+    for raw in data["findings"]:
+        if not isinstance(raw, dict):
+            raise ValueError("each finding must be an object")
+        status = Status(raw.get("status"))  # ValueError on unknown values
+        reason = raw.get("skip_reason")
+        item: Dict[str, Any] = {k: str(raw.get(k, "")) for k in _FINDING_FIELDS}
+        item["status"] = status.value
+        item["skip_reason"] = str(reason) if reason else None
+        findings.append(item)
+    coverage = Coverage.from_findings(
+        [
+            Finding(i["id"], i["module"], Status(i["status"]), i["title"])
+            for i in findings
+        ]
+    )
+    return {
+        **{k: data[k] for k in _REQUIRED_KEYS},
+        "timestamp": str(data.get("timestamp", "")),
+        "coverage": {
+            "executed": coverage.executed,
+            "skipped": coverage.skipped,
+            "errors": coverage.errors,
+        },
+        "findings": findings,
+    }
+
+
+def _safe(text: object) -> str:
+    """Neutralize terminal escapes: evidence can come from attacker-controlled logs."""
+    return _CONTROL_CHARS.sub("?", str(text))
+
+
 def _count(report: Report, status: Status) -> int:
     return sum(f["status"] == status.value for f in report["findings"])
 
@@ -75,7 +137,7 @@ def _visible(finding: Dict[str, Any], min_severity: str) -> bool:
 
 def _indented(label: str, text: str) -> List[str]:
     return [
-        f"{'':10}{label}: {line}" if i == 0 else f"{'':12}{line}"
+        f"{'':10}{label}: {_safe(line)}" if i == 0 else f"{'':12}{_safe(line)}"
         for i, line in enumerate(text.splitlines())
     ]
 
@@ -93,7 +155,7 @@ def render_summary(report: Report) -> str:
 def render_text(report: Report, min_severity: str, color: bool, verbose: bool) -> str:
     lines = [
         f"sigma-audit {report['tool_version']}  host={report['host']}  "
-        f"distro={report['distro']}  profile={report['profile']}",
+        f"distro={_safe(report['distro'])}  profile={report['profile']}",
         "",
     ]
     for finding in report["findings"]:
@@ -101,8 +163,10 @@ def render_text(report: Report, min_severity: str, color: bool, verbose: bool) -
             continue
         status = finding["status"]
         label = _paint(f"[{status}]".ljust(9), status, color)
-        reason = f" ({finding['skip_reason']})" if finding["skip_reason"] else ""
-        lines.append(f"{label} {finding['id']}  {finding['title']}{reason}")
+        reason = f" ({_safe(finding['skip_reason'])})" if finding["skip_reason"] else ""
+        lines.append(
+            f"{label} {_safe(finding['id'])}  {_safe(finding['title'])}{reason}"
+        )
         if status != "OK" or verbose:
             if finding["evidence"]:
                 lines.extend(_indented("evidence", finding["evidence"]))

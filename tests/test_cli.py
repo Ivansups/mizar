@@ -77,3 +77,43 @@ def test_report_command_rerenders_saved_json(
     code = cli.main(["report", str(tmp_path / "report.json")])
     assert code == 1
     assert "Something is off" in capsys.readouterr().out
+
+
+def test_report_command_rejects_tampered_json(
+    capsys: pytest.CaptureFixture[str], tmp_path: Path
+) -> None:
+    cli.main(["run", "--output", str(tmp_path)])
+    path = tmp_path / "report.json"
+    data = json.loads(path.read_text())
+    data["findings"][0]["status"] = "FINE"
+    path.write_text(json.dumps(data))
+    assert cli.main(["report", str(path)]) == 3
+
+
+def test_saved_reports_are_private(tmp_path: Path) -> None:
+    cli.main(["run", "--output", str(tmp_path / "out")])
+    mode = (tmp_path / "out" / "report.json").stat().st_mode & 0o777
+    assert mode == 0o600
+
+
+def test_existing_report_is_never_overwritten_or_followed(tmp_path: Path) -> None:
+    out = tmp_path / "out"
+    out.mkdir()
+    victim = tmp_path / "victim.txt"
+    victim.write_text("keep me")
+    (out / "report.json").symlink_to(victim)
+    assert cli.main(["run", "--output", str(out)]) == 3
+    assert victim.read_text() == "keep me"
+
+
+def test_default_dir_refuses_symlinked_reports_root(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    work = tmp_path / "work"
+    work.mkdir()
+    (work / "sigma-reports").symlink_to(elsewhere)
+    monkeypatch.chdir(work)
+    assert cli.main(["run"]) == 3
+    assert list(elsewhere.iterdir()) == []

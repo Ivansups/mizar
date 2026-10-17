@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Tuple
 
-from sigma_audit.context import Context
+from sigma_audit.context import CommandResult, Context
 from sigma_audit.models import Finding, SkipReason, Status
 
 PROFILES = ("quick", "standard", "full")
@@ -39,3 +39,8 @@ class Module:
         self, id: str, title: str, reason: SkipReason, evidence: str = ""
     ) -> Finding:
         return self.finding(id, Status.SKIPPED, title, evidence, skip_reason=reason)
+
+
+def lacks_privileges(ctx: Context, result: CommandResult) -> bool:
+    """True when a command failed and the likely cause is running without root."""
+    return result.returncode != 0 and not ctx.is_root
