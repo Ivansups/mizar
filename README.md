@@ -28,6 +28,25 @@ That runs the `standard` profile (passive checks only), prints a summary and
 saves `report.json` and `report.txt` to `./mizar-reports/<host>-<time>/`.
 Without root the checks that need it are reported as `SKIPPED (no_privileges)`.
 
+## Use with AI agents
+
+A skill for Claude Code and an `AGENTS.md` for other agents are included.
+
+```
+/plugin marketplace add Ivansups/mizar
+/plugin install mizar@mizar
+```
+
+Or copy the skill by hand:
+
+```bash
+mkdir -p ~/.claude/skills/mizar
+curl -fsSL https://raw.githubusercontent.com/Ivansups/mizar/master/skills/mizar/SKILL.md \
+  -o ~/.claude/skills/mizar/SKILL.md
+```
+
+The skill does not install `mizar` itself; install the CLI as shown above.
+
 ## Statuses
 
 | Status | Meaning |

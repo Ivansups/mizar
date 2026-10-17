@@ -1,0 +1,12 @@
+{
+  "name": "mizar",
+  "description": "Read-only Linux server security audit",
+  "owner": { "name": "Ivan Klimov" },
+  "plugins": [
+    {
+      "name": "mizar",
+      "source": "./",
+      "description": "Run a read-only security audit of a Linux server with the mizar CLI and explain the findings."
+    }
+  ]
+}
