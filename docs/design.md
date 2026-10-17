@@ -23,7 +23,7 @@ executed / skipped / errored.
 ## CLI
 ```
 sigma-audit [run] [--profile quick|standard|full] [--modules a,b] [--skip x,y]
-            [--format text|json|both] [--output DIR] [--min-severity ok|warn|crit]
+            [--format text|json] [--output DIR] [--no-save] [--min-severity ok|warn|crit]
             [--active] [--target HOST] [--timeout SEC] [--strict]
             [--no-color] [-q] [-v]
 sigma-audit doctor
@@ -46,7 +46,8 @@ Precedence: 2, then 3, then 4, then 1.
 ## JSON report
 `schema_version`, `tool_version`, `host`, `distro`, `timestamp`, `profile`,
 `coverage` (`executed`, `skipped`, `errors`), `findings[]`.
-Default output dir: `./sigma-reports/<host>-<timestamp>/` with `report.json`
+`--format` only picks what goes to stdout; `report.json` and `report.txt` are
+saved unless `--no-save`. Default output dir: `./sigma-reports/<host>-<timestamp>/` with `report.json`
 and `report.txt`.
 
 ## Modules
