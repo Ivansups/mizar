@@ -1,6 +1,6 @@
 {
   "name": "mizar",
   "description": "Run a read-only security audit of a Linux server with the mizar CLI and explain the findings.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "Ivan Klimov" }
 }
