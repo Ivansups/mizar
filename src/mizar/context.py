@@ -76,8 +76,11 @@ class Context:
     def read(self, path: str) -> Optional[str]:
         return self.read_fn(path)
 
+    def locate(self, tool: str) -> Optional[str]:
+        return self.which_fn(tool)
+
     def has(self, tool: str) -> bool:
-        return self.which_fn(tool) is not None
+        return self.locate(tool) is not None
 
     @classmethod
     def system(
