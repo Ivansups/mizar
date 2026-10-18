@@ -10,6 +10,8 @@ from mizar.context import Context
 from mizar.models import Finding, SkipReason, Status
 
 AUTO_UPGRADES = "/etc/apt/apt.conf.d/20auto-upgrades"
+APT_STAMP = "/var/lib/apt/periodic/update-success-stamp"
+STALE_DAYS = "+7"
 DNF_UPDATES_AVAILABLE = 100
 SAMPLE = 10
 
@@ -36,9 +38,10 @@ class PackagesModule(Module):
                 if "[upgradable" in line
             ]
             security = sum("-security" in line for line in lines)
-            return self._pending(
+            finding = self._pending(
                 title, [line.split("/")[0] for line in lines], security
             )
+            return self._flag_stale_lists(ctx, finding)
         if ctx.has("dnf"):
             result = ctx.run(["dnf", "check-update", "-q"])
             if result.returncode == 0:
@@ -59,6 +62,21 @@ class PackagesModule(Module):
             title,
             SkipReason.TOOL_MISSING,
             "neither apt nor dnf found",
+        )
+
+    def _flag_stale_lists(self, ctx: Context, finding: Finding) -> Finding:
+        """`apt list` only knows what the last `apt update` fetched."""
+        stale = ctx.run(["find", APT_STAMP, "-mtime", STALE_DAYS]).stdout.strip()
+        if not stale:
+            return finding
+        note = "package lists are older than 7 days, so the result may be incomplete"
+        evidence = f"{finding.evidence}; {note}" if finding.evidence else note
+        return self.finding(
+            finding.id,
+            Status.WARN,
+            finding.title,
+            evidence,
+            "Run apt update, then re-check; apply updates, security ones first.",
         )
 
     def _pending(

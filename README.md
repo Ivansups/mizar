@@ -47,6 +47,23 @@ curl -fsSL https://raw.githubusercontent.com/Ivansups/mizar/master/skills/mizar/
 
 The skill does not install `mizar` itself; install the CLI as shown above.
 
+## Run time
+
+Wall time of `mizar --profile <p> --no-save`, rounded. The standard and full
+profiles are dominated by Lynis, rkhunter, chkrootkit and docker-bench.
+
+| Profile | macOS (most checks skipped) | Linux with all tools (Docker, root) | Small VPS (4 vCPU, Docker, all tools) |
+|---|---|---|---|
+| `quick` | 0.1 s | 0.3 s | about 1 s (estimate) |
+| `standard` | 0.5 s | 15-25 s | 1-2 min (estimate) |
+| `full` | 0.5 s | about 38 s | 3-6 min (estimate) |
+
+`--active` adds the nmap scan of the target (seconds for localhost). Without
+root or without the optional tools the slow checks are skipped, so runs are fast
+but the coverage line shows what was not checked. Run the long profiles detached
+(`setsid nohup ... > file &`) when you use SSH, so a dropped connection does not
+lose the report.
+
 ## Statuses
 
 | Status | Meaning |

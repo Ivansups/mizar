@@ -12,6 +12,7 @@ from mizar.models import Finding, SkipReason, Status
 SSHD_PATHS = ("sshd", "/usr/sbin/sshd")
 MAX_AUTH_TRIES = 4
 MAX_NAMES = 8
+CANNOT_CONNECT = "cannot connect to"
 
 
 def summarize_recommendations(section: Dict[str, Any]) -> str:
@@ -120,8 +121,16 @@ class SshModule(Module):
             )
         cmd = ["ssh-audit", "-j"] + (["-p", port] if port else []) + [ctx.target]
         # ssh-audit's exit code reflects findings, so only the JSON is trusted.
+        result = ctx.run(cmd)
+        if CANNOT_CONNECT in result.stdout + result.stderr:
+            return self.skip(
+                "ssh.audit",
+                title,
+                SkipReason.NOT_APPLICABLE,
+                f"nothing is listening on {ctx.target}:{port or 22}",
+            )
         try:
-            data = json.loads(ctx.run(cmd).stdout)
+            data = json.loads(result.stdout)
             recs = data["recommendations"]
         except (ValueError, KeyError, TypeError):
             return self.finding(

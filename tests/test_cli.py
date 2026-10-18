@@ -69,6 +69,14 @@ def test_doctor_reports_missing_tool(capsys: pytest.CaptureFixture[str]) -> None
     assert "sometool" in capsys.readouterr().out
 
 
+def test_doctor_works_with_the_real_context(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.undo()
+    assert cli.main(["doctor"]) == 0
+    assert "distro:" in capsys.readouterr().out
+
+
 def test_report_command_rerenders_saved_json(
     capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:
@@ -104,6 +112,22 @@ def test_existing_report_is_never_overwritten_or_followed(tmp_path: Path) -> Non
     (out / "report.json").symlink_to(victim)
     assert cli.main(["run", "--output", str(out)]) == 3
     assert victim.read_text() == "keep me"
+
+
+def test_save_failure_does_not_hide_a_critical_result(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class Critical(Warns):
+        name = "crit"
+
+        def run(self, ctx: Context) -> List[Finding]:
+            return [self.finding("crit.a", Status.CRIT, "Very bad")]
+
+    monkeypatch.setattr(cli, "all_modules", lambda: [Critical()])
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "report.json").write_text("old")
+    assert cli.main(["run", "--output", str(out)]) == 2
 
 
 def test_default_dir_refuses_symlinked_reports_root(
