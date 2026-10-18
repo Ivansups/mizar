@@ -69,6 +69,14 @@ def test_doctor_reports_missing_tool(capsys: pytest.CaptureFixture[str]) -> None
     assert "sometool" in capsys.readouterr().out
 
 
+def test_doctor_works_with_the_real_context(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.undo()
+    assert cli.main(["doctor"]) == 0
+    assert "distro:" in capsys.readouterr().out
+
+
 def test_report_command_rerenders_saved_json(
     capsys: pytest.CaptureFixture[str], tmp_path: Path
 ) -> None:

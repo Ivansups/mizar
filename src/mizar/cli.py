@@ -27,6 +27,7 @@ from mizar.report import (
 from mizar.runner import run_modules, select_modules
 
 USAGE_ERROR = 3
+SCAN_OPTIONS = {"active", "target", "timeout"}
 PACKAGED_TOOLS = {"lynis", "nmap", "needrestart", "rkhunter", "chkrootkit"}
 DEB_FAMILY = {"debian", "ubuntu", "raspbian", "linuxmint"}
 RPM_FAMILY = {"rhel", "rocky", "almalinux", "centos", "fedora", "ol"}
@@ -72,7 +73,9 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def build_context(args: argparse.Namespace) -> Context:
-    return Context.system(args.active, args.target, args.timeout)
+    # `doctor` has no scan flags, so fall back to Context's defaults.
+    options = {k: v for k, v in vars(args).items() if k in SCAN_OPTIONS}
+    return Context.system(**options)
 
 
 def _use_color(args: argparse.Namespace) -> bool:
