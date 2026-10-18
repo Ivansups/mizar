@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Read-only token: the build runs repository scripts and must not be able to publish.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Tag must be on master and match the version in the code
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master \
+            || { echo "tag $GITHUB_REF_NAME is not on master" >&2; exit 1; }
+          version=$(python3 -c 'import re; print(re.search(r"__version__ = \"(.+?)\"", open("src/mizar/__init__.py").read()).group(1))')
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match __version__ $version" >&2
+            exit 1
+          fi
+
+      - name: Build
+        run: sh scripts/build.sh
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: dist
+          path: dist/
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: dist/mizar
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/mizar dist/SHA256SUMS \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes \
+            --title "mizar ${GITHUB_REF_NAME#v}"
