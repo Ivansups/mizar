@@ -57,6 +57,24 @@ def test_rkhunter_warnings_and_chkrootkit_infection(make_ctx: MakeCtx) -> None:
     assert found["malware.chkrootkit"].status is Status.CRIT
 
 
+def test_rkhunter_repeated_warnings_are_counted_once(make_ctx: MakeCtx) -> None:
+    ctx = make_ctx(
+        {
+            ("rkhunter", "--check", "--sk", "--nocolors", "--rwo"): CommandResult(
+                "Warning: The file properties have changed:\n" * 3
+                + "Warning: Hidden file found: /dev/.udev\n",
+                returncode=1,
+            ),
+        },
+        is_root=True,
+    )
+    evidence = by_id(MalwareModule().run(ctx))["malware.rkhunter"].evidence
+    assert evidence.splitlines() == [
+        "Warning: The file properties have changed: (x3)",
+        "Warning: Hidden file found: /dev/.udev",
+    ]
+
+
 def test_malware_tools_missing_or_without_root(make_ctx: MakeCtx) -> None:
     for finding in MalwareModule().run(make_ctx()):
         assert finding.skip_reason is SkipReason.TOOL_MISSING

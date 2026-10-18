@@ -114,6 +114,22 @@ def test_existing_report_is_never_overwritten_or_followed(tmp_path: Path) -> Non
     assert victim.read_text() == "keep me"
 
 
+def test_save_failure_does_not_hide_a_critical_result(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class Critical(Warns):
+        name = "crit"
+
+        def run(self, ctx: Context) -> List[Finding]:
+            return [self.finding("crit.a", Status.CRIT, "Very bad")]
+
+    monkeypatch.setattr(cli, "all_modules", lambda: [Critical()])
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "report.json").write_text("old")
+    assert cli.main(["run", "--output", str(out)]) == 2
+
+
 def test_default_dir_refuses_symlinked_reports_root(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

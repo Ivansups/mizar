@@ -27,6 +27,7 @@ from mizar.report import (
 from mizar.runner import run_modules, select_modules
 
 USAGE_ERROR = 3
+CRIT_EXIT = 2
 SCAN_OPTIONS = {"active", "target", "timeout"}
 PACKAGED_TOOLS = {"lynis", "nmap", "needrestart", "rkhunter", "chkrootkit"}
 DEB_FAMILY = {"debian", "ubuntu", "raspbian", "linuxmint"}
@@ -125,14 +126,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
     else:
         shown = render_text(report, args.min_severity, _use_color(args), args.verbose)
         print(shown)
+    code = exit_code(report, args.strict)
     if not args.no_save:
         try:
             where = _save(report, plain, args.output)
         except OSError as exc:
             print(f"mizar: cannot save report: {exc}", file=sys.stderr)
-            return USAGE_ERROR
+            return code if code == CRIT_EXIT else USAGE_ERROR
         print(f"Report saved to {where}", file=sys.stderr)
-    return exit_code(report, args.strict)
+    return code
 
 
 def _cmd_list(_: argparse.Namespace) -> int:

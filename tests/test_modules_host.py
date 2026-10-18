@@ -22,6 +22,7 @@ APT_LIST = (
 )
 APT_CMD = ("apt", "list", "--upgradable")
 AUTO_UPGRADES = "/etc/apt/apt.conf.d/20auto-upgrades"
+APT_STAMP = "/var/lib/apt/periodic/update-success-stamp"
 
 
 # --- packages ----------------------------------------------------------
@@ -36,6 +37,26 @@ def test_apt_pending_updates_warn_with_security_count(make_ctx: MakeCtx) -> None
 
 def test_apt_up_to_date_is_ok(make_ctx: MakeCtx) -> None:
     ctx = make_ctx({APT_CMD: CommandResult("Listing...\n")})
+    assert by_id(PackagesModule().run(ctx))["packages.updates"].status is Status.OK
+
+
+STALE_CMD = ("find", APT_STAMP, "-mtime", "+7")
+
+
+def test_stale_apt_lists_make_an_empty_result_a_warning(make_ctx: MakeCtx) -> None:
+    ctx = make_ctx(
+        {
+            APT_CMD: CommandResult("Listing...\n"),
+            STALE_CMD: CommandResult(APT_STAMP + "\n"),
+        }
+    )
+    updates = by_id(PackagesModule().run(ctx))["packages.updates"]
+    assert updates.status is Status.WARN
+    assert "package lists" in updates.evidence
+
+
+def test_fresh_apt_lists_keep_the_result_trustworthy(make_ctx: MakeCtx) -> None:
+    ctx = make_ctx({APT_CMD: CommandResult("Listing...\n"), STALE_CMD: CommandResult()})
     assert by_id(PackagesModule().run(ctx))["packages.updates"].status is Status.OK
 
 

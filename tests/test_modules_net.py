@@ -64,6 +64,20 @@ def test_ssh_audit_missing_is_skipped_and_present_is_parsed(
     assert by_id(SshModule().run(ctx))["ssh.audit"].status is Status.ERROR
 
 
+def test_ssh_audit_with_nothing_listening_is_not_applicable(
+    make_ctx: MakeCtx,
+) -> None:
+    sshd = {("sshd", "-T"): CommandResult(fixture_text("sshd_T_good.txt"))}
+    refused = CommandResult(
+        "[exception] cannot connect to 127.0.0.1 port 22: Connection refused",
+        returncode=1,
+    )
+    ctx = make_ctx({**sshd, ("ssh-audit", "-j", "-p", "22", "127.0.0.1"): refused})
+    audit = by_id(SshModule().run(ctx))["ssh.audit"]
+    assert audit.status is Status.SKIPPED
+    assert audit.skip_reason is SkipReason.NOT_APPLICABLE
+
+
 # --- firewall ----------------------------------------------------------
 
 
